@@ -41,6 +41,24 @@ function App() {
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null)
   const [toastMessage, setToastMessage] = useState('')
 
+  // Fetch initial orders from MongoDB Atlas backend on mount
+  useEffect(() => {
+    const fetchMongoOrders = async () => {
+      try {
+        const res = await fetch('/api/orders')
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data) && data.length > 0) {
+            setOrderHistory(data)
+          }
+        }
+      } catch (err) {
+        console.warn('MongoDB API not reachable yet, fallback to localStorage:', err)
+      }
+    }
+    fetchMongoOrders()
+  }, [])
+
   // Sync Cart to localStorage
   useEffect(() => {
     localStorage.setItem('aroma_cart', JSON.stringify(cartItems))
@@ -56,7 +74,7 @@ function App() {
     setToastMessage(msg)
     setTimeout(() => {
       setToastMessage('')
-    }, 2800)
+    }, 3200)
   }
 
   // Add Item to Cart
@@ -117,9 +135,9 @@ function App() {
     setIsCheckoutOpen(true)
   }
 
-  // Complete Order
-  const handleCompleteOrder = (newOrder) => {
-    // Add to history
+  // Complete Order & Save to MongoDB Atlas
+  const handleCompleteOrder = async (newOrder) => {
+    // Add to local state & localStorage first
     setOrderHistory(prev => [newOrder, ...prev])
     // Clear cart
     setCartItems([])
@@ -127,7 +145,23 @@ function App() {
     setIsCheckoutOpen(false)
     // Show Receipt
     setActiveReceiptOrder(newOrder)
-    triggerToast('🎉 Order placed successfully! Receipt generated.')
+
+    // Save to MongoDB Atlas database
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder)
+      })
+      if (res.ok) {
+        triggerToast('✅ Order placed & saved to MongoDB Atlas!')
+      } else {
+        triggerToast('🎉 Order placed successfully!')
+      }
+    } catch (err) {
+      console.warn('Saved locally. MongoDB API sync warning:', err)
+      triggerToast('🎉 Order placed successfully!')
+    }
   }
 
   // Reorder from History
@@ -140,11 +174,16 @@ function App() {
   }
 
   // Clear Order History
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     if (window.confirm('Do you want to permanently clear your order history?')) {
       setOrderHistory([])
       localStorage.removeItem('aroma_order_history')
-      triggerToast('Order history cleared.')
+      try {
+        await fetch('/api/orders', { method: 'DELETE' })
+        triggerToast('Order history cleared from MongoDB & local storage.')
+      } catch (err) {
+        triggerToast('Order history cleared.')
+      }
     }
   }
 

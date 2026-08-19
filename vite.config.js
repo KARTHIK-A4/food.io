@@ -2,9 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  // In production build (GitHub Actions / Pages), use '/food.io/'. In local dev (npm run dev), use '/'
-  base: command === 'build' ? '/food.io/' : '/',
+export default defineConfig({
+  base: './',
   plugins: [react()],
   server: {
     port: 5173,
@@ -17,6 +16,6 @@ export default defineConfig(({ command }) => ({
       }
     }
   }
-}))
+})
 
 

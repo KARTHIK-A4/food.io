@@ -41,11 +41,26 @@ function App() {
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null)
   const [toastMessage, setToastMessage] = useState('')
 
+  // Helper to determine API endpoint safely (handles local dev, custom VITE_API_URL, and static GitHub Pages)
+  const getApiEndpoint = (path) => {
+    const customApi = import.meta.env.VITE_API_URL
+    if (customApi) {
+      const cleanCustom = customApi.replace(/\/+$/, '')
+      return cleanCustom.endsWith('/api') ? `${cleanCustom}${path.replace('/api', '')}` : `${cleanCustom}${path}`
+    }
+    if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
+      return null
+    }
+    return path
+  }
+
   // Fetch initial orders from MongoDB Atlas backend on mount
   useEffect(() => {
     const fetchMongoOrders = async () => {
+      const endpoint = getApiEndpoint('/api/orders')
+      if (!endpoint) return
       try {
-        const res = await fetch('/api/orders')
+        const res = await fetch(endpoint)
         if (res.ok) {
           const data = await res.json()
           if (Array.isArray(data) && data.length > 0) {
@@ -147,21 +162,23 @@ function App() {
     setActiveReceiptOrder(newOrder)
 
     // Save to MongoDB Atlas database
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder)
-      })
-      if (res.ok) {
-        triggerToast('✅ Order placed & saved to MongoDB Atlas!')
-      } else {
-        triggerToast('🎉 Order placed successfully!')
+    const endpoint = getApiEndpoint('/api/orders')
+    if (endpoint) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder)
+        })
+        if (res.ok) {
+          triggerToast('✅ Order placed & saved to MongoDB Atlas!')
+          return
+        }
+      } catch (err) {
+        console.warn('Saved locally. MongoDB API sync warning:', err)
       }
-    } catch (err) {
-      console.warn('Saved locally. MongoDB API sync warning:', err)
-      triggerToast('🎉 Order placed successfully!')
     }
+    triggerToast('🎉 Order placed successfully!')
   }
 
   // Reorder from History
@@ -178,12 +195,17 @@ function App() {
     if (window.confirm('Do you want to permanently clear your order history?')) {
       setOrderHistory([])
       localStorage.removeItem('aroma_order_history')
-      try {
-        await fetch('/api/orders', { method: 'DELETE' })
-        triggerToast('Order history cleared from MongoDB & local storage.')
-      } catch (err) {
-        triggerToast('Order history cleared.')
+      const endpoint = getApiEndpoint('/api/orders')
+      if (endpoint) {
+        try {
+          await fetch(endpoint, { method: 'DELETE' })
+          triggerToast('Order history cleared from MongoDB & local storage.')
+          return
+        } catch (err) {
+          // fallthrough
+        }
       }
+      triggerToast('Order history cleared.')
     }
   }
 

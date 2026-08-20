@@ -19,8 +19,7 @@ export default function CheckoutModal({
   if (!isOpen) return null
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
-  const gst = subtotal * 0.05
-  const grandTotal = subtotal + gst
+  const grandTotal = subtotal
 
   const handlePayNow = (e) => {
     e.preventDefault()
@@ -58,7 +57,7 @@ export default function CheckoutModal({
         },
         items: [...cartItems],
         subtotal: subtotal,
-        gst: gst,
+        gst: 0,
         grandTotal: grandTotal,
         paymentMethod: paymentMethod === 'gpay' ? 'Google Pay (UPI)' : 'Cash at Counter',
         paymentStatus: 'PAID',
@@ -262,10 +261,6 @@ export default function CheckoutModal({
               <div className="checkout-sum-row">
                 <span>Items ({cartItems.length}):</span>
                 <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="checkout-sum-row">
-                <span>GST (5%):</span>
-                <span>₹{gst.toFixed(2)}</span>
               </div>
               <div className="checkout-sum-row total">
                 <span>Grand Total to Pay:</span>

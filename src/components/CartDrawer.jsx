@@ -12,8 +12,7 @@ export default function CartDrawer({
   if (!isOpen) return null
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
-  const gst = subtotal * 0.05
-  const grandTotal = subtotal + gst
+  const grandTotal = subtotal
 
   return (
     <div className="cart-backdrop" onClick={onClose}>
@@ -92,10 +91,6 @@ export default function CartDrawer({
               <div className="bill-row">
                 <span>Items Subtotal</span>
                 <span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="bill-row">
-                <span>GST (5%)</span>
-                <span>₹{gst.toFixed(2)}</span>
               </div>
               <div className="bill-row free-row">
                 <span>Packaging & Dine-in Service</span>

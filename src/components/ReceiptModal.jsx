@@ -100,10 +100,12 @@ export default function ReceiptModal({
               <span>Subtotal:</span>
               <span>₹{order.subtotal.toFixed(2)}</span>
             </div>
-            <div className="total-row">
-              <span>GST (5%):</span>
-              <span>₹{order.gst.toFixed(2)}</span>
-            </div>
+            {order.gst > 0 && (
+              <div className="total-row">
+                <span>GST (5%):</span>
+                <span>₹{order.gst.toFixed(2)}</span>
+              </div>
+            )}
             <div className="total-row">
               <span>Packaging / Dining Fee:</span>
               <span>₹0.00</span>

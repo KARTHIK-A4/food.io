@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   subtotal: { type: Number, required: true },
-  gst: { type: Number, required: true },
+  gst: { type: Number, default: 0 },
   grandTotal: { type: Number, required: true },
   paymentMethod: { type: String, required: true },
   paymentStatus: { type: String, default: 'PAID' },
@@ -57,15 +57,34 @@ const Order = mongoose.model('Order', orderSchema)
 
 // Connect to MongoDB Atlas
 console.log('Connecting to MongoDB Atlas...')
-mongoose.connect(MONGODB_URI)
+const mongooseOptions = {
+  tls: true,
+  tlsAllowInvalidCertificates: true,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000
+}
+
+mongoose.connect(MONGODB_URI, mongooseOptions)
   .then(async () => {
     console.log('✅ Successfully connected to MongoDB Atlas (coffeeshop_db)')
     const count = await Order.countDocuments()
     console.log(`Current orders in database: ${count}`)
   })
   .catch((err) => {
-    console.error('❌ MongoDB Connection Error:', err.message)
+    console.error('❌ MongoDB Atlas Connection Error:', err.message)
   })
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Mongoose Connection Error:', err.message)
+})
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️ MongoDB connection lost.')
+})
+
+mongoose.connection.on('reconnected', () => {
+  console.log('🔄 MongoDB connection restored.')
+})
 
 // Health / Status Route
 app.get('/api/health', (req, res) => {

@@ -6,7 +6,8 @@ export default function Navbar({
   cartCount, 
   cartTotal, 
   onOpenCart,
-  orderHistoryCount 
+  orderHistoryCount,
+  mongoStatus = 'connected'
 }) {
   return (
     <header className="main-header">
@@ -51,8 +52,16 @@ export default function Navbar({
           </button>
         </nav>
 
-        {/* My Cart Trigger */}
+        {/* Header Right Actions */}
         <div className="header-actions">
+          {/* Mongo Atlas Connection Status Badge */}
+          <div className={`mongo-status-pill ${mongoStatus}`} title={`MongoDB Atlas: ${mongoStatus}`}>
+            <span className="status-dot"></span>
+            <span className="status-text">
+              {mongoStatus === 'connected' ? 'Atlas Sync' : mongoStatus === 'connecting' ? 'Connecting...' : 'Local Mode'}
+            </span>
+          </div>
+
           <button className="cart-trigger-btn" onClick={onOpenCart} aria-label="Open Shopping Cart">
             <div className="cart-icon-wrapper">
               <span className="cart-emoji">🛒</span>

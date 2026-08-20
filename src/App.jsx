@@ -40,6 +40,7 @@ function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [activeReceiptOrder, setActiveReceiptOrder] = useState(null)
   const [toastMessage, setToastMessage] = useState('')
+  const [mongoStatus, setMongoStatus] = useState('connecting') // 'connected' | 'disconnected' | 'connecting'
 
   // Helper to determine API endpoint safely (handles local dev, custom VITE_API_URL, and static GitHub Pages)
   const getApiEndpoint = (path) => {
@@ -58,17 +59,24 @@ function App() {
   useEffect(() => {
     const fetchMongoOrders = async () => {
       const endpoint = getApiEndpoint('/api/orders')
-      if (!endpoint) return
+      if (!endpoint) {
+        setMongoStatus('disconnected')
+        return
+      }
       try {
         const res = await fetch(endpoint)
         if (res.ok) {
           const data = await res.json()
+          setMongoStatus('connected')
           if (Array.isArray(data) && data.length > 0) {
             setOrderHistory(data)
           }
+        } else {
+          setMongoStatus('disconnected')
         }
       } catch (err) {
         console.warn('MongoDB API not reachable yet, fallback to localStorage:', err)
+        setMongoStatus('disconnected')
       }
     }
     fetchMongoOrders()
@@ -255,6 +263,7 @@ function App() {
         cartTotal={cartTotal}
         onOpenCart={() => setIsCartOpen(true)}
         orderHistoryCount={orderHistory.length}
+        mongoStatus={mongoStatus}
       />
 
       {/* PAGE 1: HOME PAGE */}
